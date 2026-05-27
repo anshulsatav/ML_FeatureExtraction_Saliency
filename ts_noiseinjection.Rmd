@@ -1,0 +1,51 @@
+---
+title: "analyzing_ts"
+author: "Anshul"
+date: "2026-05-26"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+```{r}
+df <- read.csv("C:/Users/satavans/Downloads/non_aug_data.csv")
+df
+```
+
+```{r}
+df_analyze <- df %>%
+  filter(Subject == 5,Sample == 1, Drive == 1)
+
+
+ggplot(df_analyze, aes(X,LPupil_Diameter)) +
+  geom_line()
+
+ggplot(df_analyze, aes(X,RPupil_Diameter)) +
+  geom_line()
+
+df_injection <- df_analyze %>%
+  mutate(Blink = ifelse(LPupil_Diameter == 0 & RPupil_Diameter == 0, 1,0)) %>%
+  mutate(LPupil_Diameter = ifelse(lag(Blink) == 1 | lead(Blink) == 1, 0,LPupil_Diameter),
+         RPupil_Diameter = ifelse(lag(Blink) == 1 | lead(Blink) == 1, 0,RPupil_Diameter))
+
+ggplot(df_injection, aes(X,LPupil_Diameter)) +
+  geom_line()
+
+ggplot(df_injection, aes(X,RPupil_Diameter)) +
+  geom_line()
+  
+```
+
+```{r}
+ggplot(df_analyze, aes(X,Left_Gaze_Dir_X)) +
+  geom_line()
+
+ggplot(df_analyze, aes(X,Right_Gaze_Dir_X)) +
+  geom_line()
+```
+
+
+
