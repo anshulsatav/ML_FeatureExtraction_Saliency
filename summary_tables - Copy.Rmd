@@ -1,0 +1,102 @@
+---
+title: "f1_table"
+author: "Anshul"
+date: "2026-07-07"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+
+```{r}
+# SHaPELET
+df_lrp_95p_spike <- read.csv("C:/Users/satavans/Downloads/shapelet_files/lrp_results/metrics_top10.csv")
+df_lrp_95p_spike <- df_lrp_95p_spike %>%
+  mutate(method = "ROCKET-LRP")
+
+df_mfdr_95p_spike <- read.csv("C:/Users/satavans/Downloads/shapelet_files/results/metrics_top10.csv")
+df_mfdr_95p_spike <- df_mfdr_95p_spike %>%
+  mutate(method = "Kernel MFDR")
+
+#df_shap_95p_spike <- read.csv("C:/Users/satavans/Downloads/shapelet_files/shap_results/metrics_topk.csv")
+#df_shap_95p_spike <- df_shap_95p_spike %>%
+#  mutate(method = "Kernel SHAP")
+
+df_lime_95p_spike <- read.csv("C:/Users/satavans/Downloads/shapelet_files/lime_results/metrics_top10.csv")
+df_lime_95p_spike <- df_lime_95p_spike %>%
+  mutate(method = "LIME")
+
+df_rand_95p_spike <- read.csv("C:/Users/satavans/Downloads/shapelet_files/random_results/metrics_topk.csv")
+df_rand_95p_spike <- df_rand_95p_spike %>%
+  mutate(method = "Random")
+```
+
+
+
+
+```{r}
+df_lrp_95p_spike <- read.csv("C:/Users/satavans/Downloads/spike_files_0.2spike/lrp_results/metrics_topk.csv")
+df_lrp_95p_spike <- df_lrp_95p_spike %>%
+  mutate(method = "ROCKET-LRP")
+
+df_mfdr_95p_spike <- read.csv("C:/Users/satavans/Downloads/spike_files_0.2spike/results/metrics_topk_0.0001.csv")
+df_mfdr_95p_spike <- df_mfdr_95p_spike %>%
+  mutate(method = "Kernel MFDR (0.001)")
+
+df_mfdr_95p_spike1 <- read.csv("C:/Users/satavans/Downloads/spike_files_0.2spike/results/metrics_topk_0.001.csv")
+df_mfdr_95p_spike1 <- df_mfdr_95p_spike1 %>%
+  mutate(method = "Kernel MFDR (0.01)")
+
+df_mfdr_95p_spike2 <- read.csv("C:/Users/satavans/Downloads/spike_files_0.2spike/results/metrics_topk.csv")
+df_mfdr_95p_spike2 <- df_mfdr_95p_spike2 %>%
+  mutate(method = "Kernel MFDR (0.1)")
+
+df_shap_95p_spike <- read.csv("C:/Users/satavans/Downloads/spike_files_0.2spike/shap_results/metrics_topk.csv")
+df_shap_95p_spike <- df_shap_95p_spike %>%
+  mutate(method = "Kernel SHAP")
+
+df_lime_95p_spike <- read.csv("C:/Users/satavans/Downloads/spike_files_0.2spike/lime_results/metrics_topk.csv")
+df_lime_95p_spike <- df_lime_95p_spike %>%
+  mutate(method = "LIME")
+
+df_rand_95p_spike <- read.csv("C:/Users/satavans/Downloads/spike_files_0.2spike/random_results/metrics_topk.csv")
+df_rand_95p_spike <- df_rand_95p_spike %>%
+  mutate(method = "Random")
+```
+
+
+
+```{r}
+df_mfdr_summary <- bind_rows(df_mfdr_95p_spike, df_mfdr_95p_spike1, df_mfdr_95p_spike2, df_lrp_95p_spike,df_lime_95p_spike, df_shap_95p_spike, df_rand_95p_spike)
+df_mfdr_summary <- df_mfdr_summary %>%
+  group_by(method)%>%
+  summarize (
+    mean_recall = mean(recall),
+    recall_90p = quantile(recall, probs = 0.9),
+    recall_75p = quantile(recall, probs = 0.75),
+    recall_50p = quantile(recall, probs = 0.5),
+    recall_25p = quantile(recall, probs = 0.25),
+    recall_0p = quantile(recall, probs = 0)
+  ) 
+
+df_mfdr_summary
+```
+
+
+```{r}
+df_mfdr_summary <- bind_rows(df_mfdr_95p_spike, df_lrp_95p_spike, df_lime_95p_spike)
+df_mfdr_summary <- df_mfdr_summary %>%
+  group_by(method)%>%
+  summarize (
+    mean_fdr = mean(false.discovery.rate),
+    fdr_90p = quantile(false.discovery.rate, probs = 0.9),
+    fdr_50p = quantile(false.discovery.rate, probs = 0.5),
+    fdr_10p = quantile(false.discovery.rate, probs = 0.1),
+    fdr_0p = quantile(false.discovery.rate, probs = 0)
+  )
+
+df_mfdr_summary
+```
