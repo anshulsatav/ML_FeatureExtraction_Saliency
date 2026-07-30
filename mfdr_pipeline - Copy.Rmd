@@ -1,0 +1,109 @@
+---
+title: "FDR_analysis"
+author: "Anshul"
+date: "2026-06-22"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(ncvreg)
+```
+
+
+```{r}
+library(tidyverse)
+library(ncvreg)
+
+rocket_dir_train <- "C:/Users/satavans/Downloads/spike_files_0.2spike/train_files/"
+rocket_dir <- "C:/Users/satavans/Downloads/spike_files_0.2spike/"
+for(i in 0:99){
+  feats <- read.csv(file.path(rocket_dir_train, paste0("spike_rocket", i, ".csv")))
+  y <- read.csv(file.path(rocket_dir_train, paste0("spike_y", i, ".csv")))
+  y_list <- y$X0
+  
+  cvfit <- cv.ncvreg(feats,y_list,family = "binomial",penalty = "lasso")
+  coef_opt <- coef(
+      cvfit,
+      lambda = cvfit$lambda.min
+  )
+  
+  selected_features <- which(coef_opt[-1] != 0)
+  selected_features
+  
+  fit <- ncvreg(feats,y_list,family = "binomial",penalty = "lasso")
+  mfdr(fit, feats)
+  df <- summary(fit, lambda = cvfit$lambda.min)
+  
+  df_filtered <- df$table %>%
+    filter(mfdr < 0.001) %>%
+    rownames_to_column(var = "feature")
+  
+  selected_features <- floor((selected_features[df_filtered$feature] - 1)/2)
+  df2 <- data.frame(selected_features)
+  
+  write.csv(df2, file.path(rocket_dir, paste0("kernels_0.001/spike_kernels", i, ".csv")))
+  print(i)
+}
+
+
+```
+
+```{r}
+feats
+```
+
+
+
+
+```{r}
+library(tidyverse)
+library(ncvreg)
+
+rocket_dir_train <- "C:/Users/satavans/Downloads/shapelet_files/train_files/"
+rocket_dir <- "C:/Users/satavans/Downloads/shapelet_files/"
+for(i in 0:99){
+  feats <- read.csv(file.path(rocket_dir_train, paste0("shapelet_rocket", i, ".csv")))
+  y <- read.csv(file.path(rocket_dir_train, paste0("shapelet_y", i, ".csv")))
+  y_list <- y$X0
+  
+  cvfit <- cv.ncvreg(feats,y_list,family = "binomial",penalty = "lasso")
+  coef_opt <- coef(
+      cvfit,
+      lambda = cvfit$lambda.min
+  )
+  
+  selected_features <- which(coef_opt[-1] != 0)
+  selected_features
+  
+  fit <- ncvreg(feats,y_list,family = "binomial",penalty = "lasso")
+  mfdr(fit, feats)
+  df <- summary(fit, lambda = cvfit$lambda.min)
+  
+  df_filtered <- df$table %>%
+    filter(mfdr < 0.001) %>%
+    rownames_to_column(var = "feature")
+  
+  selected_features <- floor((selected_features[df_filtered$feature] - 1)/2)
+  df2 <- data.frame(selected_features)
+  
+  write.csv(df2, file.path(rocket_dir, paste0("kernels_0.001/shapelet_kernels", i, ".csv")))
+  print(i)
+}
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
