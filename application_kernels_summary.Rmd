@@ -1,0 +1,178 @@
+---
+title: "application"
+author: "Anshul"
+date: "2026-07-11"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(ncvreg)
+```
+
+
+```{r}
+rocket_dir_train <- "C:/Users/satavans/Downloads/alcohol_application/train_files/"
+rocket_dir <- "C:/Users/satavans/Downloads/alcohol_application/"
+for(i in 0:99){
+  feats <- read.csv(file.path(rocket_dir_train, paste0("driving_split", i, ".csv")))
+  y <- read.csv(file.path(rocket_dir_train, paste0("driving_split_y", i, ".csv")))
+  y_list <- y$X0
+  
+  cvfit <- cv.ncvreg(feats,y_list,family = "binomial",penalty = "lasso")
+  coef_opt <- coef(
+      cvfit,
+      lambda = cvfit$lambda.min
+  )
+  
+  selected_features <- which(coef_opt[-1] != 0)
+  selected_features
+  
+  fit <- ncvreg(feats,y_list,family = "binomial",penalty = "lasso")
+  mfdr(fit, feats)
+  df <- summary(fit, lambda = cvfit$lambda.min)
+  
+  df_filtered <- df$table %>%
+    filter(mfdr < 0.001) %>%
+    rownames_to_column(var = "feature")
+  
+  selected_features <- floor((selected_features[df_filtered$feature] - 1)/2)
+  df2 <- data.frame(selected_features)
+  
+  write.csv(df2, file.path(rocket_dir, paste0("kernels_0.001/spike_kernels", i, ".csv")))
+  print(i)
+}
+
+```
+
+
+```{r}
+# LRP results
+df752 <- read.csv("C:/Users/satavans/Downloads/alcohol_application/deletion_lrp_results/auc_top5rem.csv")%>%
+  mutate(method = "LRP")
+df502 <- read.csv("C:/Users/satavans/Downloads/alcohol_application/deletion_lrp_results/auc_top10rem.csv")%>%
+  mutate(method = "LRP")
+df252 <- read.csv("C:/Users/satavans/Downloads/alcohol_application/deletion_lrp_results/auc_top15rem.csv")%>%
+  mutate(method = "LRP")
+
+cat("LRP Mean 75 % =", mean(df752$X0), "\n")
+cat("LRP Mean 50 % =", mean(df502$X0), "\n")
+cat("LRP Mean 25 % =", mean(df252$X0), "\n")
+
+
+# MFDR results
+df75 <- read.csv("C:/Users/satavans/Downloads/alcohol_application/deletion_results_0.01/auc_top5rem.csv")%>%
+  mutate(method = "FDF (0.01)")
+df50 <- read.csv("C:/Users/satavans/Downloads/alcohol_application/deletion_results_0.01/auc_top10rem.csv")%>%
+  mutate(method = "FDF (0.01)")
+df25 <- read.csv("C:/Users/satavans/Downloads/alcohol_application/deletion_results_0.01/auc_top15rem.csv")%>%
+  mutate(method = "FDF (0.01)")
+dfo <- read.csv("C:/Users/satavans/Downloads/alcohol_application/results/original_auc.csv")
+
+df753 <- read.csv("C:/Users/satavans/Downloads/alcohol_application/deletion_results_0.1/auc_top5rem.csv") %>%
+  mutate(method = "FDF (0.1)")
+df503 <- read.csv("C:/Users/satavans/Downloads/alcohol_application/deletion_results_0.1/auc_top10rem.csv")%>%
+  mutate(method = "FDF (0.1)")
+df253 <- read.csv("C:/Users/satavans/Downloads/alcohol_application/deletion_results_0.1/auc_top15rem.csv")%>%
+  mutate(method = "FDF (0.1)")
+
+df754 <- read.csv("C:/Users/satavans/Downloads/alcohol_application/deletion_results_0.001/auc_top5rem.csv")%>%
+  mutate(method = "FDF (0.001)")
+df504 <- read.csv("C:/Users/satavans/Downloads/alcohol_application/deletion_results_0.001/auc_top10rem.csv")%>%
+  mutate(method = "FDF (0.001)")
+df254 <- read.csv("C:/Users/satavans/Downloads/alcohol_application/deletion_results_0.001/auc_top15rem.csv")%>%
+  mutate(method = "FDF (0.001)")
+
+
+df_rand75 <- read.csv("C:/Users/satavans/Downloads/alcohol_application/deletion_random_results/auc_top5rem.csv")%>%
+  mutate(method = "Random")
+df_rand50 <- read.csv("C:/Users/satavans/Downloads/alcohol_application/deletion_random_results/auc_top10rem.csv")%>%
+  mutate(method = "Random")
+df_rand25 <- read.csv("C:/Users/satavans/Downloads/alcohol_application/deletion_random_results/auc_top15rem.csv")%>%
+  mutate(method = "Random")
+
+df_lime75 <- read.csv("C:/Users/satavans/Downloads/alcohol_application/deletion_lime_results/auc_top5rem.csv")%>%
+  mutate(method = "LIME")
+df_lime50 <- read.csv("C:/Users/satavans/Downloads/alcohol_application/deletion_lime_results/auc_top10rem.csv")%>%
+  mutate(method = "LIME")
+df_lime25 <- read.csv("C:/Users/satavans/Downloads/alcohol_application/deletion_lime_results/auc_top15rem.csv")%>%
+  mutate(method = "LIME")
+
+cat("MFDR Mean 75 % =", mean(df75$X0), "\n")
+cat("MFDR Mean 50 % =", mean(df50$X0), "\n")
+cat("MFDR Mean 25 % =", mean(df25$X0), "\n")
+cat("Original AUC =", mean(dfo$X0), "\n")
+```
+
+```{r}
+df_shap252 <- read.csv("C:/Users/satavans/Downloads/alcohol_application/deletion_shap_results/auc_top15rem.csv")
+df_shap25 <- read.csv("C:/Users/satavans/Downloads/alcohol_application/deletion_shap_results/auc_top15rem1.csv") 
+df_shap25 <- df_shap25 %>%
+  bind_rows(df_shap252) %>%
+  mutate(method = "Kernel SHAP")
+
+df_shap25
+
+df_shap502 <- read.csv("C:/Users/satavans/Downloads/alcohol_application/deletion_shap_results/auc_top10rem.csv")
+df_shap50 <- read.csv("C:/Users/satavans/Downloads/alcohol_application/deletion_shap_results/auc_top10rem1.csv") 
+df_shap50 <- df_shap50 %>%
+  bind_rows(df_shap502) %>%
+  mutate(method = "Kernel SHAP")
+
+df_shap50
+
+df_shap752 <- read.csv("C:/Users/satavans/Downloads/alcohol_application/deletion_shap_results/auc_top5rem.csv")
+df_shap75 <- read.csv("C:/Users/satavans/Downloads/alcohol_application/deletion_shap_results/auc_top5rem1.csv") 
+df_shap75 <- df_shap75 %>%
+  bind_rows(df_shap752) %>%
+  mutate(method = "Kernel SHAP")
+
+df_shap75
+```
+
+
+
+```{r}
+auc75 = bind_rows(head(df75,10), head(df752,10), head(df753,10), head(df754,10), df_lime75, df_rand75, df_shap75)
+auc75_sum = auc75 %>%
+  group_by(method)%>%
+  summarize(
+    original_auc = mean(dfo$X0),
+    mean_auc_5 = paste0(round(mean(X0), 4), "  (", round(sd(X0), 4), ")")
+  )
+auc75_sum
+```
+
+```{r}
+auc50 = bind_rows(head(df50,10), head(df502,10), head(df503,10), head(df504,10), df_lime50, df_rand50, df_shap50)
+auc50_sum = auc50 %>%
+  group_by(method)%>%
+  summarize(
+    mean_auc_10 = paste0(round(mean(X0), 4), "  (", round(sd(X0), 4), ")")
+  )
+auc50_sum
+```
+
+
+
+```{r}
+auc25 = bind_rows(head(df25,10), head(df252,10), head(df253,10), head(df254,10), df_lime25, df_rand25, df_shap25)
+auc25_sum = auc25 %>%
+  group_by(method)%>%
+  summarize(
+    mean_auc_15 = paste0(round(mean(X0), 4), "  (", round(sd(X0), 4), ")")
+  )
+auc25_sum
+```
+
+```{r}
+auc_combined <- auc75_sum %>%
+  left_join(auc50_sum, by = "method") %>%
+  left_join(auc25_sum, by = "method")
+
+auc_combined
+```
+
+
+
